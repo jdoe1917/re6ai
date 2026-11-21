@@ -376,6 +376,84 @@ sb-ctwrap[content=Tags] sb-canvas {
         }
 
         &:hover a.delete-link { visibility: visible; }
+
+        a.fav-link {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            background: #00000080;
+            color: white;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.1s;
+
+            // Not favorited: outlined star
+            svg {
+                width: 1rem;
+                height: 1rem;
+                path { fill: transparent; stroke: currentColor; stroke-width: 40; }
+            }
+
+            &:hover { color: #c3a816; }
+        }
+
+        &:hover a.fav-link,
+        &[fav=true] a.fav-link { opacity: 1; }
+
+        // Favorited: solid, gold star
+        &[fav=true] a.fav-link {
+            color: #c3a816;
+            svg path { fill: currentColor; }
+        }
+
+        // Hidden by the filters above
+        &[filtered=true] { display: none !important; }
+    }
+
+    // Filter settings, at the very top of the notifications
+    sb-filters {
+        grid-column: 1 / -1;
+        order: -1;
+        display: flex;
+        flex-flow: column;
+        gap: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.25rem;
+        background: #ffffff08;
+        font-size: 0.9rem;
+
+        label.sb-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+
+            input { margin: 0; }
+            .sb-filter-name { flex: 1; overflow-wrap: anywhere; }
+            .sb-filter-count { color: #999999; }
+        }
+
+        sb-filter-group {
+            display: block;
+            max-height: 10rem;
+            overflow-y: auto;
+            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+            border-top: 1px solid #ffffff20;
+
+            .sb-filter-title {
+                font-weight: bold;
+                color: #999999;
+                margin-bottom: 0.25rem;
+                cursor: help;
+            }
+        }
     }
 }
 

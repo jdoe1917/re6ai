@@ -39,6 +39,9 @@ export class TagTracker extends SubscriptionTracker {
       ...super.getDefaultSettings(),
 
       cacheSize: 500,                 // how many subscription updates are kept
+
+      hideFavorited: false,           // hide updates for posts that the user has already favorited
+      blacklistShown: [],             // blacklist filters that the user unchecked, i.e. whose posts are shown
     };
   }
 
@@ -95,10 +98,10 @@ export class TagTracker extends SubscriptionTracker {
       const timestamp = post.date.obj.getTime();
       if (timestamp < lastUpdate) continue;
 
-      // Avoid posts with blacklisted tags
-      // This is kind of excessive, but it works
+      // Posts with blacklisted tags are kept, along with the filters that matched them.
+      // Whether they are displayed is decided on the notifications page, see `applyFilters()`
       Blacklist.addPost(post);
-      if (Blacklist.checkPost(post.id, true)) continue;
+      const matchedFilters = Blacklist.getMatchingFilters(post);
 
       result[timestamp] = {
         uid: post.id,
@@ -111,6 +114,8 @@ export class TagTracker extends SubscriptionTracker {
                     + "|" + post.img.height     // height       int
                     + "|" + post.file.size,      // filesize     int
         new: true,
+        fav: post.is_favorited,
+        ...(matchedFilters.length > 0 ? { bl: matchedFilters } : {}),
       };
     }
 
@@ -130,6 +135,7 @@ export class TagTracker extends SubscriptionTracker {
     const result = $("<subitem>")
       .attr({
         "new": data.new,    // Output ordering
+        "fav": data.fav === true,
         "uid": timestamp,   // Needed for dynamic rendering
 
         // Necessary data for the HoverZoom
@@ -209,6 +215,33 @@ export class TagTracker extends SubscriptionTracker {
             image.attr("src", Page.getDeletedPreviewURL());
           });
 
+        let favBusy = false;
+        $("<a>")
+          .addClass("fav-link")
+          .attr("title", "Favorite")
+          .html(Icons.get("star"))
+          .appendTo(result)
+          .on("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (favBusy) return;
+            favBusy = true;
+
+            const favorite = result.attr("fav") !== "true";
+            const success = favorite
+              ? await PostActions.addFavorite(data.uid)
+              : await PostActions.removeFavorite(data.uid);
+
+            if (success) {
+              data.fav = favorite;
+              result.attr("fav", favorite + "");
+              this.cache.save();
+            } else Danbooru.error(`Error: unable to ${favorite ? "add post to" : "remove post from"} favorites`);
+
+            favBusy = false;
+          });
+
         $("<a>")
           .addClass("delete-link")
           .html(`<span>${Icons.get("times")}</span>`)
@@ -221,6 +254,9 @@ export class TagTracker extends SubscriptionTracker {
       .on("re621:reset", () => {
         result.html("");
       });
+
+    // Used by `applyFilters()`. Kept outside of the render event, since the contents get reset
+    result.data("bl", data.bl || []);
 
     return result;
 
@@ -235,6 +271,82 @@ export class TagTracker extends SubscriptionTracker {
         ? Page.getStaticURL(`data/sample/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.jpg`)
         : Page.getStaticURL(`data/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.${ext}`);
     }
+  }
+
+  protected execPostDraw (): void {
+    this.drawFilterPanel();
+    this.applyFilters();
+  }
+
+  /** Adds the filter settings to the top of the canvas */
+  private drawFilterPanel (): void {
+
+    const $panel = $("<sb-filters>").prependTo(this.getCanvasElement());
+
+    // Hide favorited
+    $("<label>")
+      .addClass("sb-filter")
+      .append(
+        $("<input>")
+          .attr("type", "checkbox")
+          .prop("checked", this.fetchSettings<boolean>("hideFavorited") === true)
+          .on("change", async (event) => {
+            await this.pushSettings("hideFavorited", (event.currentTarget as HTMLInputElement).checked);
+            this.applyFilters();
+          }),
+        $("<span>").text("Hide already favorited"),
+      )
+      .appendTo($panel);
+
+    // Blacklist - only the filters that actually match at least one of the updates
+    const counts = new Map<string, number>();
+    this.cache.forEach((data) => {
+      for (const filter of data.bl || [])
+        counts.set(filter, (counts.get(filter) || 0) + 1);
+    });
+    if (counts.size == 0) return;
+
+    const shown = new Set<string>(this.fetchSettings<string[]>("blacklistShown") || []);
+
+    const $group = $("<sb-filter-group>")
+      .append($("<div>").addClass("sb-filter-title").text("Blacklist").attr("title", "Checked filters are hidden. Uncheck to show the matching posts."))
+      .appendTo($panel);
+
+    for (const [filter, count] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+      $("<label>")
+        .addClass("sb-filter")
+        .append(
+          $("<input>")
+            .attr("type", "checkbox")
+            .prop("checked", !shown.has(filter))
+            .on("change", async (event) => {
+              if ((event.currentTarget as HTMLInputElement).checked) shown.delete(filter);
+              else shown.add(filter);
+              await this.pushSettings("blacklistShown", [...shown]);
+              this.applyFilters();
+            }),
+          $("<span>").addClass("sb-filter-name").text(filter),
+          $("<span>").addClass("sb-filter-count").text(count),
+        )
+        .appendTo($group);
+    }
+  }
+
+  /** Hides the updates that are excluded by the filter settings */
+  private applyFilters (): void {
+    const hideFavorited = this.fetchSettings<boolean>("hideFavorited") === true;
+    const shown = new Set<string>(this.fetchSettings<string[]>("blacklistShown") || []);
+
+    for (const el of this.getCanvasElement().find("subitem").get()) {
+      const $el = $(el);
+      const filters: string[] = $el.data("bl") || [];
+      const hidden = (hideFavorited && $el.attr("fav") == "true") || filters.some(filter => !shown.has(filter));
+
+      if (hidden) $el.attr("filtered", "true");
+      else $el.removeAttr("filtered");
+    }
+
+    SubscriptionManager.trigger("attributes." + this.getTrackerID());
   }
 
   protected formatSubscriptionListEntry (id: string, value: any, unsub: (name: string) => void): JQuery<HTMLElement> {

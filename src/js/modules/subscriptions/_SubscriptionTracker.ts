@@ -97,12 +97,12 @@ export class SubscriptionTracker extends RE6Module {
 
       ctwrap.attr({
         posts: this.canvas.find("subitem").length,
-        added: this.canvas.find("subitem[new]").length,
+        added: this.canvas.find("subitem[new]:not([filtered])").length,
       });
 
       this.tabbtn.attr({
         loading: ctwrap.attr("state") == TrackerState.Load,
-        updates: this.canvas.find("subitem[new=true]").length,
+        updates: this.canvas.find("subitem[new=true]:not([filtered])").length,
       });
 
       SubscriptionManager.trigger("notification");

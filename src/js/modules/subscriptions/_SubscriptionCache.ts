@@ -191,6 +191,8 @@ export interface UpdateContent {
   md5?: string;       // md5 hash of the image, if available
   ext?: string;       // any extraneous information that needs to be stored
   par?: number;       // unique ID of the parent element, if available
+  fav?: boolean;      // whether the post was favorited by the user, if applicable
+  bl?: string[];      // blacklist filters that matched the post at the time of the update, if any
 
   new?: boolean;
 }

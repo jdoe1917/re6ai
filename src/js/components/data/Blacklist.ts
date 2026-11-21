@@ -91,6 +91,19 @@ export class Blacklist {
   }
 
   /**
+   * Returns the names of all filters that match the post, regardless of whether they are enabled.
+   * The post has to be added to the blacklist cache first.
+   * @param post Post, or post ID
+   */
+  public static getMatchingFilters (post: PostData | number): string[] {
+    if (typeof post !== "number") post = post.id;
+    const result: string[] = [];
+    for (const filter of Blacklist.get().values())
+      if (filter.matchesID(post, true)) result.push(filter.getName());
+    return result;
+  }
+
+  /**
    * Alternative approach to `checkPost` method.
    * Returns:
    * - 0 if no filters match the post
