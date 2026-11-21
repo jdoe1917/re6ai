@@ -151,6 +151,7 @@ export class Post implements PostData {
       "maxPlayingGIFs",
       "ribbonsFlag",
       "ribbonsRel",                        // renderRibbons
+      "trackedArtistIcon",                 // renderTrackedArtist
       "buttonsVote",
       "buttonsFav",                        // renderButtons
       "customFlagsExpanded",
@@ -177,6 +178,7 @@ export class Post implements PostData {
     this.$ref
       .append(PostParts.renderImage(this, conf))       // Image
       .append(PostParts.renderRibbons(this, conf))     // Ribbons
+      .append(PostParts.renderTrackedArtist(this, conf)) // Tracked artist indicator
       .append(PostParts.renderButtons(this, conf))     // Voting Buttons
       .append(PostParts.renderFlags(this, conf))       // Custom Flags
       .append(PostParts.renderInfo(this, conf));       // Post info

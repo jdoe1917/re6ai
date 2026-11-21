@@ -3,10 +3,12 @@ import { CustomFlagger } from "../../modules/search/CustomFlagger";
 import { Danbooru } from "../api/Danbooru";
 import { PostFlag } from "../api/responses/APIPost";
 import { XM } from "../api/XM";
+import { TrackedArtists } from "../cache/TrackedArtists";
 import { Blacklist } from "../data/Blacklist";
 import { Page, PageDefinition } from "../data/Page";
 import { User } from "../data/User";
 import { Debug } from "../utility/Debug";
+import { Icons } from "../utility/Icons";
 import { Util } from "../utility/Util";
 import { FileExtension, LoadedFileType, Post, PostData } from "./Post";
 import { PostActions } from "./PostActions";
@@ -216,6 +218,26 @@ export class PostParts {
     }
 
     return $image;
+  }
+
+  /**
+   * Creates an icon that is shown if at least one of the post's artists
+   * is in the user's tag tracker subscriptions. Hidden otherwise.
+   */
+  public static renderTrackedArtist (post: Post, conf: any): JQuery<HTMLElement> {
+    if (!conf.trackedArtistIcon) return $();
+
+    const $icon = $("<tracked-artist>").html(Icons.get("paint-brush"));
+
+    TrackedArtists.find(post).then((artists) => {
+      if (artists.length == 0) return;
+      $icon.attr({
+        "active": "true",
+        "title": "Tracked " + (artists.length == 1 ? "artist" : "artists") + ": " + artists.join(", "),
+      });
+    });
+
+    return $icon;
   }
 
   public static renderRibbons (post: Post, conf: any): JQuery<HTMLElement> {

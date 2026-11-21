@@ -621,6 +621,20 @@ export class SettingsController extends RE6Module {
           ]),
           Form.spacer(3, true),
 
+          // Tracked Artist Icon
+          Form.checkbox(
+            {
+              value: betterSearch.fetchSettings("trackedArtistIcon"),
+              label: "<b>Tracked Artist Icon</b><br />Display an icon in the top right corner of posts whose artist is in your tag subscriptions",
+              width: 3,
+            },
+            async (data) => {
+              await betterSearch.pushSettings("trackedArtistIcon", data);
+              if (betterSearch.isInitialized()) betterSearch.reloadRenderedPosts();
+            },
+          ),
+          Form.spacer(3, true),
+
           // Underlined Visited Posts
           Form.checkbox(
             {

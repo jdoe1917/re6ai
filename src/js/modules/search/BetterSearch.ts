@@ -75,6 +75,7 @@ export class BetterSearch extends RE6Module {
       ribbonsRel: true,                               // Relations ribbons - parent / child posts
       ribbonsFlag: true,                              // Status ribbons - flagged / pending
       ribbonsAlt: false,                              // Alternative ribbon placement
+      trackedArtistIcon: true,                        // Show an icon if the post's artist is in the tag tracker subscriptions
       buttonsVote: true,                              // Voting buttons
       buttonsFav: true,                               // Favorite button
 
