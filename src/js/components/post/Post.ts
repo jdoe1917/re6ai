@@ -524,7 +524,7 @@ export namespace PostData {
         meta: new Set(data.tags.meta),
         lore: new Set(data.tags.lore),
       },
-      tagCategoriesKnown: true,
+      tagCategoriesKnown: data.tagCategoriesKnown !== false,
 
       sources: data.sources,
       description: data.description,
@@ -592,15 +592,18 @@ export namespace PostData {
     if (currentPostData.flags.flagged) flags.add(PostFlag.Flagged);
     if (currentPostData.flags.deleted) flags.add(PostFlag.Deleted);
 
+    // Tag category names differ between sites (artist / copyright vs. director / franchise)
+    const categorizedTags = APIPost.normalizeTags(currentPostData.tags).tags;
+
     const allTags = new Set<string>([
-      ...currentPostData.tags.director,
-      ...currentPostData.tags.franchise,
-      ...currentPostData.tags.species,
-      ...currentPostData.tags.character,
-      ...currentPostData.tags.general,
-      ...currentPostData.tags.invalid,
-      ...currentPostData.tags.meta,
-      ...currentPostData.tags.lore,
+      ...categorizedTags.director,
+      ...categorizedTags.franchise,
+      ...categorizedTags.species,
+      ...categorizedTags.character,
+      ...categorizedTags.general,
+      ...categorizedTags.invalid,
+      ...categorizedTags.meta,
+      ...categorizedTags.lore,
     ]);
 
     const result = {
@@ -627,15 +630,15 @@ export namespace PostData {
       tagString: [...allTags].sort().join(" "),
       tags: {
         all: allTags,
-        director: new Set(currentPostData.tags.director),
-        real_director: new Set(currentPostData.tags.director.filter(tag => Tag.isArtist(tag))),
-        franchise: new Set(currentPostData.tags.franchise),
-        species: new Set(currentPostData.tags.species),
-        character: new Set(currentPostData.tags.character),
-        general: new Set(currentPostData.tags.general),
-        invalid: new Set(currentPostData.tags.invalid),
-        meta: new Set(currentPostData.tags.meta),
-        lore: new Set(currentPostData.tags.lore),
+        director: new Set(categorizedTags.director),
+        real_director: new Set(categorizedTags.director.filter(tag => Tag.isArtist(tag))),
+        franchise: new Set(categorizedTags.franchise),
+        species: new Set(categorizedTags.species),
+        character: new Set(categorizedTags.character),
+        general: new Set(categorizedTags.general),
+        invalid: new Set(categorizedTags.invalid),
+        meta: new Set(categorizedTags.meta),
+        lore: new Set(categorizedTags.lore),
       },
       tagCategoriesKnown: true,
 
@@ -943,15 +946,7 @@ interface RawPostObject {
   "locked_tags": string[];
   "sources": string[];
   "description": string;
-  "tags": {
-    "general": string[];
-    "director": string[];
-    "franchise": string[];
-    "character": string[];
-    "species": string[];
-    "invalid": string[];
-    "meta": string[];
-    "lore": string[];
-  };
+  /** Category names vary by site, see `APIPost.normalizeTags()` */
+  "tags": Record<string, string[]>;
   "initial_size": string;
 }

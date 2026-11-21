@@ -3,6 +3,7 @@
 
 import { Debug } from "../utility/Debug";
 import { Util } from "../utility/Util";
+import { APIPost } from "./responses/APIPost";
 import { APIResponse } from "./responses/APIResponse";
 
 // All endpoints must be registered here.
@@ -202,10 +203,15 @@ class APIEndpoint {
    * @param hasParam Whether or not the endpoint had a parameter
    */
   private formatData<T extends APIResponse>(data: any, node: string): T[] {
-    if (node !== undefined) data = data[node];
+    // Some sites wrap the results (`{ posts: [...] }`), others return them as-is (`[...]`)
+    if (node !== undefined && data !== null && typeof data === "object" && !Array.isArray(data) && data[node] !== undefined)
+      data = data[node];
 
-    if (Array.isArray(data)) return data as T[];
-    else return [data as T];
+    const result: T[] = Array.isArray(data) ? data as T[] : [data as T];
+
+    // Post structure differs between sites, so it is converted to the one the script uses
+    if (node === "posts" || node === "post") return result.map(entry => APIPost.normalize(entry)) as unknown as T[];
+    return result;
   }
 
 }

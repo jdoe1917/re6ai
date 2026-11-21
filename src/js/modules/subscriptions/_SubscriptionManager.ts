@@ -515,6 +515,21 @@ export class SubscriptionManager extends RE6Module {
             working = false;
           }),
 
+          Form.button({ value: "Rewind 3 Weeks", title: "Sets the last update time to three weeks ago and runs an update, to re-fetch anything posted since then" }, async (value, button) => {
+            if (working) return;
+            working = true;
+
+            button.html(`<span class="spin">${Icons.get("spinner")}</span>`);
+            await instance.pushSettings("lastUpdate", Util.Time.now() - (3 * Util.Time.WEEK));
+            await instance.pushSettings("lastAttempt", 0);
+            await instance.update();
+            button.html(`Done!`);
+            await Util.sleep(1000);
+            button.html("Rewind 3 Weeks");
+
+            working = false;
+          }),
+
           Form.button({ value: "Clear Cache" }, async (value, button) => {
             if (working) return;
             working = true;

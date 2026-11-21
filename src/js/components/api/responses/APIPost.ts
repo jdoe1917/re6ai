@@ -8,7 +8,7 @@ export interface APIPost extends APIResponse {
   preview: Preview;
   sample: Sample;
   score: Score;
-  tags: Tags;
+  tags: APIPostTags;
   locked_tags: string[];
   change_seq: number;
   flags: Flags;
@@ -23,6 +23,9 @@ export interface APIPost extends APIResponse {
   comment_count: number;
   is_favorited?: boolean;
   duration: number;
+
+  /** Set by `APIPost.normalize()`. False if the site returned a flat tag list, with no categories. */
+  tagCategoriesKnown?: boolean;
 }
 
 interface Relationships {
@@ -41,7 +44,7 @@ interface Flags {
   deleted: boolean;
 }
 
-interface Tags {
+export interface APIPostTags {
   general: string[];
   species: string[];
   character: string[];
@@ -169,6 +172,74 @@ export namespace PostRating {
 }
 
 export namespace APIPost {
+
+  /**
+   * Converts the tags returned by the site into the categories used by the script.
+   * Supported sites name their categories differently (artist / copyright / contributor),
+   * and some endpoints return a flat list of tags with no categories at all.
+   * @returns Categorized tags, and whether the categories are actually known
+   */
+  export function normalizeTags (tags: unknown): { tags: APIPostTags; categoriesKnown: boolean } {
+    if (Array.isArray(tags)) {
+      return {
+        tags: { general: tags, species: [], character: [], franchise: [], director: [], invalid: [], meta: [], lore: [] },
+        categoriesKnown: false,
+      };
+    }
+
+    const source = (tags || {}) as Record<string, unknown>;
+    const get = (...keys: string[]): string[] => keys.flatMap((key) => (Array.isArray(source[key]) ? source[key] as string[] : []));
+    return {
+      tags: {
+        director: get("director", "artist", "contributor"),
+        franchise: get("franchise", "copyright"),
+        character: get("character"),
+        general: get("general"),
+        species: get("species"),
+        invalid: get("invalid"),
+        meta: get("meta"),
+        lore: get("lore"),
+      },
+      categoriesKnown: true,
+    };
+  }
+
+  /**
+   * Converts a post returned by any of the supported sites into the structure used by the script.
+   * Handles both the legacy structure (`file`, `sample`, `score`) and the new one (`files`, `stats`, `has`).
+   * Anything that doesn't look like a post is returned as-is.
+   */
+  export function normalize (raw: any): APIPost {
+    if (!raw || typeof raw !== "object" || raw.id === undefined || raw.tags === undefined) return raw;
+
+    const { tags, categoriesKnown } = normalizeTags(raw.tags);
+    const result = { ...raw, tags: tags, tagCategoriesKnown: categoriesKnown } as APIPost;
+
+    if (raw.files) {
+      const files = raw.files, has = raw.has || {}, stats = raw.stats || {}, rel = raw.relationships || {};
+      const original = files.original || {}, meta = files.meta || {}, preview = files.preview || {}, sample = files.sample || {};
+
+      result.file = { width: original.width, height: original.height, ext: meta.ext, size: meta.size, md5: meta.md5, url: original.url };
+      result.preview = { width: preview.width, height: preview.height, url: preview.jpg };
+      result.sample = { has: meta.has_sample === true || has.sample === true, width: sample.width, height: sample.height, url: sample.jpg };
+      result.score = stats.score;
+      result.fav_count = stats.fav_count;
+      result.comment_count = stats.comment_count;
+      result.is_favorited = stats.is_favorited;
+      result.duration = meta.duration;
+      result.relationships = {
+        parent_id: rel.parent_id,
+        has_children: has.children === true,
+        has_active_children: has.active_children === true,
+        children: rel.children || [],
+      };
+      result["user_score"] = stats.vote;
+    } else if (result["user_score"] === undefined && typeof raw.vote === "number") {
+      result["user_score"] = raw.vote;
+    }
+
+    return result;
+  }
 
   export function getTags (post: APIPost): string[] {
     return [

@@ -411,7 +411,8 @@ export class SubscriptionTracker extends RE6Module {
       this.updateInProgress = false;
       SubscriptionManager.trigger("inprogress." + this.trackerID, 2);
     } catch (error) {
-      ErrorHandler.error(this, JSON.stringify(error), "update");
+      // JSON.stringify() turns an Error into "{}", which hides the actual problem
+      ErrorHandler.error(this, error instanceof Error ? (error.stack || error.message) : JSON.stringify(error), "update");
       this.networkOffline = true;
       this.updateInProgress = false;
       SubscriptionManager.trigger("inprogress." + this.trackerID, 3);
