@@ -77,11 +77,33 @@ export class Page {
   }
 
   /**
-   * Returns the name of the current site
-   * @returns e621 or e926
+   * Returns the name of the current site, i.e. the hostname without the TLD
+   * @returns ex. floofgens or blep
    */
   public static getSiteName (): string {
-    return this.getInstance().url.hostname.replace(/\.net/g, "");
+    return this.getInstance().url.hostname.replace(/^www\./, "").replace(/\.[^.]+$/, "");
+  }
+
+  /**
+   * Returns the hostname of the server that hosts the post files (previews, samples, originals).
+   * Must be kept in sync with the @connect / permissions entries in bin/
+   */
+  public static getStaticHost (): string {
+    const hostname = this.getInstance().url.hostname.replace(/^www\./, "");
+    return StaticHosts[hostname] ?? ("static1." + hostname);
+  }
+
+  /**
+   * Builds an absolute URL to a file on the current site's static file server
+   * @param path Path of the file, ex. `data/preview/ab/cd/abcd....jpg`
+   */
+  public static getStaticURL (path: string): string {
+    return `https://${this.getStaticHost()}/${path.replace(/^\//, "")}`;
+  }
+
+  /** Placeholder thumbnail for deleted posts, served by the current site */
+  public static getDeletedPreviewURL (): string {
+    return this.getInstance().url.origin + "/images/deleted-preview.png";
   }
 
   /**
@@ -110,6 +132,12 @@ export class Page {
     return null;
   }
 }
+
+/** Supported sites and the hosts that serve their post files */
+const StaticHosts: Record<string, string> = {
+  "floofgens.net": "static1.floofgens.net",
+  "blep.art": "cdn.blep.art",
+};
 
 export const PageDefinition = {
   title: /^(\/)?$/,

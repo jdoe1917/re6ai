@@ -3,7 +3,7 @@
   "displayName": "re6ai - e6ai Reimagined",
   "namespace": "re621.app",
   "version": "1.0.12",
-  "description": "Subscription manager, mass downloader, thumbnail enhancer, and more for e6ai",
+  "description": "Subscription manager, mass downloader, thumbnail enhancer, and more for floofgens and blep.art",
   "author": "bitWolfy",
   "contributors": [
     "bitWolfy",
@@ -85,7 +85,7 @@
   "bugs": {
     "url": "https://github.com/re621/re6ai/issues"
   },
-  "homepage": "https://e6ai.net/forum_topics/227",
+  "homepage": "https://github.com/re621/re6ai",
   "github": "https://github.com/re621/re6ai",
   "dependencies": {
     "caniuse-lite": "^1.0.30001751",

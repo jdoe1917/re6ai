@@ -3,6 +3,7 @@ import { BetterSearch } from "../../modules/search/BetterSearch";
 import { CustomFlagger } from "../../modules/search/CustomFlagger";
 import { APIPost, PostFlag, PostRating } from "../api/responses/APIPost";
 import { Blacklist } from "../data/Blacklist";
+import { Page } from "../data/Page";
 import { Tag } from "../data/Tag";
 import { ModuleController } from "../ModuleController";
 import { Debug } from "../utility/Debug";
@@ -815,8 +816,8 @@ export namespace PostData {
   export function createPreviewUrlFromMd5 (md5: string): string {
     // Assume that the post is flash when no md5 is passed
     return md5 == ""
-      ? "https://static1.e6ai.net/images/download-preview.png"
-      : `https://static1.e6ai.net/data/preview/${md5.substring(0, 2)}/${md5.substring(2, 4)}/${md5}.jpg`;
+      ? Page.getStaticURL("images/download-preview.png")
+      : Page.getStaticURL(`data/preview/${md5.substring(0, 2)}/${md5.substring(2, 4)}/${md5}.jpg`);
   }
 }
 

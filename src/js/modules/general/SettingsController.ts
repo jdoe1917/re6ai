@@ -2491,8 +2491,7 @@ export class SettingsController extends RE6Module {
       Form.div({
         value:
                     `Keeping the script - and the website - fully functional is our highest priority. `
-                    + `If you are experiencing bugs or issues, do not hesitate to create a new ticket on <a href="${window["re621"]["links"]["issues"]}" target="_blank" rel="noopener noreferrer">github</a>, `
-                    + `or leave us a message in the <a href="${window["re621"]["links"]["forum"]}" target="_blank" rel="noopener noreferrer">forum thread</a>. `
+                    + `If you are experiencing bugs or issues, do not hesitate to create a new ticket on <a href="${window["re621"]["links"]["issues"]}" target="_blank" rel="noopener noreferrer">github</a>. `
                     + `Feature requests, comments, and overall feedback are also appreciated.`,
         width: 3,
       }),
