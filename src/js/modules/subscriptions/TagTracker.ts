@@ -2,7 +2,7 @@ import { E621 } from "../../components/api/E621";
 import { APIPost, PostFlag } from "../../components/api/responses/APIPost";
 import { XM } from "../../components/api/XM";
 import { Blacklist } from "../../components/data/Blacklist";
-import { PageDefinition } from "../../components/data/Page";
+import { Page, PageDefinition } from "../../components/data/Page";
 import { ModuleController } from "../../components/ModuleController";
 import { PostData } from "../../components/post/Post";
 import { PostActions } from "../../components/post/PostActions";
@@ -201,12 +201,12 @@ export class TagTracker extends SubscriptionTracker {
               image
                 .attr("src", getSampleLink(imageData[0], imageData[1] == "true", imageData[2]))
                 .one("error", () => {
-                  image.attr("src", "https://e6ai.net/images/deleted-preview.png");
+                  image.attr("src", Page.getDeletedPreviewURL());
                 });
           })
           .one("error", () => {
             image.attr("error", "true");
-            image.attr("src", "https://e6ai.net/images/deleted-preview.png");
+            image.attr("src", Page.getDeletedPreviewURL());
           });
 
         $("<a>")
@@ -225,15 +225,15 @@ export class TagTracker extends SubscriptionTracker {
     return result;
 
     function getPreviewLink (md5: string): string {
-      if (!md5) return "https://e6ai.net/images/deleted-preview.png";
-      return `https://static1.e6ai.net/data/preview/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.jpg`;
+      if (!md5) return Page.getDeletedPreviewURL();
+      return Page.getStaticURL(`data/preview/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.jpg`);
     }
 
     function getSampleLink (md5: string, hasSample: boolean, ext = "jpg"): string {
-      if (!md5) return "https://e6ai.net/images/deleted-preview.png";
+      if (!md5) return Page.getDeletedPreviewURL();
       return hasSample
-        ? `https://static1.e6ai.net/data/sample/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.jpg`
-        : `https://static1.e6ai.net/data/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.${ext}`;
+        ? Page.getStaticURL(`data/sample/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.jpg`)
+        : Page.getStaticURL(`data/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}.${ext}`);
     }
   }
 

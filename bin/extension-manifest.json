@@ -32,7 +32,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://e6ai.net/*"
+                "https://floofgens.net/*",
+                "https://blep.art/*"
             ],
             "css": [],
             "js": [],
@@ -61,7 +62,8 @@
         "tabs",
         "downloads",
         "https://api.github.com/*",
-        "https://static1.e6ai.net/*",
+        "https://static1.floofgens.net/*",
+        "https://cdn.blep.art/*",
         "https://re621.app/*"
     ],
     "resources": {
